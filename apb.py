@@ -2,26 +2,27 @@
 # -----------------------------------------------------------------------------
 #    Copyright 2021 Stephen Stebbing. telecnatron.com
 #
-#    Licensed under the Telecnatron License, Version 1.0 (the “License”);
+#    Licensed under the Telecnatron License, Version 1.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
 #
 #        https://telecnatron.com/software/licenses/
 #
 #    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an “AS IS” BASIS,
+#    distributed under the License is distributed on an "AS IS" BASIS,
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 # -----------------------------------------------------------------------------
+
+# Arlec Grid Connect (or similar) wifi-controlled powerboard. 
+# see: https://www.bunnings.com.au/arlec-grid-connect-smart-4-outlet-powerboard_p0161023
+#
+# Requires tinytuya module. See: https://github.com/jasonacox/tinytuya
+
 import tinytuya
 
-"""
-Arlec Grid Connect (or similar) wifi-controlled powerboard. 
-see: https://www.bunnings.com.au/arlec-grid-connect-smart-4-outlet-powerboard_p0161023
-
-Requires tinytuya module. See: https://github.com/jasonacox/tinytuya
-"""
+__VERSION="0.9"
 
 # Exception class which is raised when an error is detected
 class APBException(Exception):
@@ -61,40 +62,39 @@ class APB:
         if 'Error' in r:
             raise APBException(f"{r['Err']}: {r['Error']}")
 
-
     def off(self):
         r=self._device.set_status(False)
         if 'Error' in r:
             raise APBException(f"{r['Err']}: {r['Error']}")
 
-        
     def toggle(self):
         s=not self.state
         self.state=s
         return int(s)
         
 # -----------------------------------------------------------------------------
-import argparse
-import json
-import socket
-import sys
-
-
-# silly little function to print to sdterr
-def print_stderr(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
-
-# display passed error message to stderr and exit with passed status code.
-def exit_nicely(status=0, error_msg=''):
-    if error_msg != '':
-        print_stderr(f'ERROR: {error_msg}')
-    exit(status)
-
 
 if __name__ == "__main__":
 
+    import argparse
+    import json
+    import socket
+    import sys
 
-    # default path to device table file.
+
+    # silly little function to print to sdterr
+    def print_stderr(*args, **kwargs):
+        print(*args, file=sys.stderr, **kwargs)
+
+        
+    # display passed error message to stderr and exit with passed status code.
+    def exit_nicely(status=0, error_msg=''):
+        if error_msg != '':
+            print_stderr(f'ERROR: {error_msg}')
+        exit(status)
+
+        
+    # Default path to device table file.
     # The json should be dictionary of hostname->[id, key]
     # note that hostname should be fqdn or IP number.
     # eg:
@@ -103,23 +103,27 @@ if __name__ == "__main__":
     #  "slap.home.ss": ["744315537003af8f9571", "f94j23118e2f5810"]
     #}
     device_conf_path = "/etc/apb/apb.json"
-
     
     # handle command line
     parser=argparse.ArgumentParser()
-    parser.add_argument("host",help="hostname or IP number of the device")    
-    parser.add_argument("cmd", choices=['0','on','1','off','t','toggle','s','state'], default='s')
+    parser.add_argument("host", nargs='?', help="hostname or IP number of the device")    
+    parser.add_argument("cmd", nargs='?', choices=['0','on','1','off','t','toggle','s','state','status'], default='s' , help="Command to send to device. Being one of: on, off, state. Default is state.")
     parser.add_argument("-k","--key",help="device key")
     parser.add_argument("-d","--id",help="device id")
-    parser.add_argument("-f","--config",help="path to json device-configuration file, default is {device_conf_path}", default=f'{device_conf_path}')    
+    parser.add_argument("-f","--config",help="path to json device-configuration file, default is {device_conf_path}", default=f'{device_conf_path}')
+    parser.add_argument("-v","--version", help="show version number and exit", action="store_true")
     args=parser.parse_args()
 
+    
+    if args.version:
+        print(f"{__VERSION}")
+        exit_nicely()
+        
     # note that we convert specified hostname to fqdn
     host = args.host
     key = args.key
     id = args.id
-
-  
+                        
     if key == None or id == None:
         # one or more of key and id where not specified on command line.
         # Read json config file
@@ -142,6 +146,7 @@ if __name__ == "__main__":
         if key == None:
             key = devices[fqdn][1]
     except KeyError as ke:
+        print(socket.inet_aton(host))
         exit_nicely(2, error_msg=f"no entry in device table for host/ip: {host}\nPlease specify --key and --id for this host.")
 
     # connect to host
@@ -158,11 +163,11 @@ if __name__ == "__main__":
             apb.on()
         elif cmd == 't' or cmd == 'toggle':
             apb.toggle()
-        elif cmd == 's' or cmd == 'state':
+        elif cmd == 's' or cmd == 'state' or cmd == 'status':
             print(f'{apb.state}')
 
     except APBException as ae:
         exit_nicely(3, error_msg=f"{ae}")
 
         
-exit_nicely()
+        exit_nicely()
