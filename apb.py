@@ -102,7 +102,7 @@ if __name__ == "__main__":
     #  "apb0.home.ss": ["7553155390339f8fa571", "f201b3618e4f3f10"],
     #  "slap.home.ss": ["744315537003af8f9571", "f94j23118e2f5810"]
     #}
-    device_conf_path = "/etc/apb.json"
+    device_conf_path = "/etc/apb/apb.json"
 
     
     # handle command line
