@@ -14,12 +14,24 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 # -----------------------------------------------------------------------------
-
-# Arlec Grid Connect (or similar) wifi-controlled powerboard. 
-# see: https://www.bunnings.com.au/arlec-grid-connect-smart-4-outlet-powerboard_p0161023
 #
-# Requires tinytuya module. See: https://github.com/jasonacox/tinytuya
-
+# Arlec Grid Connect (or similar) wifi-controlled powerboard:
+#   https://www.bunnings.com.au/arlec-grid-connect-smart-4-outlet-powerboard_p0161023
+# Source code for this utility:
+#   https://github.com/telecnatron/arlec_wifi_power_board
+#
+# Requires tinytuya module:
+#   https://github.com/jasonacox/tinytuya
+#
+# tinytuya can be installed like this:
+#   # Install PIP if need be
+#   sudo apt-get install python-crypto python-pip
+#   # Install TinyTuya
+#   python -m pip install tinytuya
+#
+# This utility requires:
+#   apt install python3-simplejson python3-requests-unixsocket
+#
 import tinytuya
 
 __VERSION="0.9"
@@ -73,14 +85,12 @@ class APB:
         return int(s)
         
 # -----------------------------------------------------------------------------
-
 if __name__ == "__main__":
 
     import argparse
     import json
     import socket
     import sys
-
 
     # silly little function to print to sdterr
     def print_stderr(*args, **kwargs):
@@ -119,8 +129,13 @@ if __name__ == "__main__":
         print(f"{__VERSION}")
         exit_nicely()
         
-    # note that we convert specified hostname to fqdn
+    # note that later on we convert specified hostname to fqdn
     host = args.host
+    if host == None:
+        # no host name specified, show usage and exit.
+        parser.print_help()
+        exit_nicely()
+        
     key = args.key
     id = args.id
                         
@@ -149,14 +164,14 @@ if __name__ == "__main__":
         print(socket.inet_aton(host))
         exit_nicely(2, error_msg=f"no entry in device table for host/ip: {host}\nPlease specify --key and --id for this host.")
 
-    # connect to host
     try:
+        # connect to host
         apb = APB(id,host,key)
 
         # do what we've been commanded to do
         cmd=args.cmd
-        #XXX steves: bloody python, doesn't have switch statement, does have match statement, but not until 3.10,
-        #XXX we're using 3.8.10, bloody python
+        #XXX steves: bloody python, doesn't have switch statement but does have match statement (persumably just to be different),
+        #XXX but not until 3.10, we're using 3.8.10 and 3.7.3
         if cmd == '0' or cmd == 'off':
             apb.off()
         elif cmd == '1' or cmd == 'on':
@@ -165,9 +180,8 @@ if __name__ == "__main__":
             apb.toggle()
         elif cmd == 's' or cmd == 'state' or cmd == 'status':
             print(f'{apb.state}')
-
     except APBException as ae:
         exit_nicely(3, error_msg=f"{ae}")
 
-        
-        exit_nicely()
+    # got to here, so persumably everything succeeded.    
+    exit_nicely()
