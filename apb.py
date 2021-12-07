@@ -34,7 +34,7 @@
 #
 import tinytuya
 
-__VERSION="0.9"
+_VERSION_="0.9"
 
 # Exception class which is raised when an error is detected
 class APBException(Exception):
@@ -126,7 +126,7 @@ if __name__ == "__main__":
 
     
     if args.version:
-        print(f"{__VERSION}")
+        print(f"{_VERSION_}")
         exit_nicely()
         
     # note that later on we convert specified hostname to fqdn
