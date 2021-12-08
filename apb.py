@@ -34,7 +34,7 @@
 #
 import tinytuya
 
-_VERSION_="0.9"
+_VERSION_="0.9.1"
 
 # Exception class which is raised when an error is detected
 class APBException(Exception):
@@ -161,7 +161,6 @@ if __name__ == "__main__":
         if key == None:
             key = devices[fqdn][1]
     except KeyError as ke:
-        print(socket.inet_aton(host))
         exit_nicely(2, error_msg=f"no entry in device table for host/ip: {host}\nPlease specify --key and --id for this host.")
 
     try:
